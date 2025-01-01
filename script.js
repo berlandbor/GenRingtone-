@@ -8,7 +8,7 @@ const waveTypeSelect = document.getElementById("waveType");
 const saveButton = document.getElementById("save");
 const loadButton = document.getElementById("load");
 const loopCheckbox = document.getElementById("loop");
-
+let isPlaying = false;
 const notes = [
     "C2", "D2", "E2", "F2", "G2", "A2", "B2", // Вторая октава
     "C3", "D3", "E3", "F3", "G3", "A3", "B3", // Третья октава
@@ -80,27 +80,38 @@ grid.addEventListener("click", (e) => {
 
 // Воспроизведение нот в порядке очереди
 playButton.addEventListener("click", () => {
-    const playMelody = () => {
-        playbackQueue.forEach((item, index) => {
-            const { row, col } = item;
-            const note = notes[row];
-            const duration = durations[row][col];
-
-            setTimeout(() => {
-                playNote(note, duration);
-            }, index * playbackSpeed);
-        });
-
-        if (isLooping) {
-            setTimeout(playMelody, playbackQueue.length * playbackSpeed);
-        }
-    };
-
-    playMelody();
+    if (isPlaying) {
+        stopPlayback(); // Останавливаем текущую мелодию
+    }
+    startPlayback(); // Запускаем новую
 });
+
+function stopPlayback() {
+    isPlaying = false;
+    playbackQueue = []; // Очищаем очередь, чтобы остановить текущую мелодию
+}
+
+function startPlayback() {
+    isPlaying = true;
+    playbackQueue.forEach((item, index) => {
+        const { row, col } = item;
+        const note = notes[row];
+
+        setTimeout(() => {
+            if (!isPlaying) return; // Проверяем, не остановлено ли воспроизведение
+            playNote(note, durations[row][col]);
+        }, index * playbackSpeed);
+    });
+
+    // Автоматически останавливаем воспроизведение после последней ноты
+    setTimeout(() => {
+        isPlaying = false;
+    }, playbackQueue.length * playbackSpeed);
+}
 
 // Очистка сетки и очереди
 clearButton.addEventListener("click", () => {
+    stopPlayback(); // Останавливаем воспроизведение
     activeCells = Array(rows).fill(null).map(() => Array(cols).fill(false));
     durations = Array(rows).fill(null).map(() => Array(cols).fill(300));
     playbackQueue = [];
